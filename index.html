@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Murdoku Jr. — Past Simple Detective</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Fredoka:wght@400;500;600;700&family=Special+Elite&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+.hidden{display:none!important}
+body{background:#e9ede2;font-family:'Fredoka',sans-serif;color:#3a2f25;display:flex;justify-content:center;padding:20px 10px 40px;min-height:100vh;position:relative}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+background:
+ radial-gradient(circle at 10% 85%,rgba(163,196,140,.5) 0 120px,transparent 160px),
+ radial-gradient(circle at 92% 90%,rgba(163,196,140,.4) 0 100px,transparent 140px),
+ radial-gradient(circle at 15% 12%,rgba(212,163,115,.15) 0 90px,transparent 120px),
+ repeating-linear-gradient(0deg,transparent 0 40px,rgba(139,110,76,.05) 40px 41px),
+ linear-gradient(165deg,#f4f1ea,#ece7db 60%,#e2ddcf);}
+.wrap{position:relative;z-index:10;background:#fffdf5;border:6px double #8b6e4c;padding:26px;width:96%;max-width:1000px;border-radius:6px;box-shadow:10px 10px 0 rgba(90,66,51,.18)}
+.poster{background:linear-gradient(150deg,#fdf3e3,#f6e7cf);border:4px solid #b98f5a;border-radius:8px;padding:22px 18px;margin-bottom:18px;box-shadow:inset 0 0 0 3px #fdf3e3,inset 0 0 0 5px #d9b98c}
+.poster h1{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:2.6rem;letter-spacing:2px;color:#4a3423;margin:0}
+.poster .sub{font-family:'Playfair Display',Georgia,serif;color:#a34a2e;font-size:1rem;margin-top:2px}
+.poster .meta{display:flex;gap:16px;margin-top:12px;font-weight:700;font-size:.78rem;color:#5a4233;flex-wrap:wrap}
+.poster .meta span{border-top:1px solid #d9b98c;padding-top:5px;letter-spacing:1px}
+.hud{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.pill{background:#fff;border:2px solid #d9b98c;border-radius:20px;padding:6px 14px;font-size:.78rem;font-weight:600;color:#5a4233;box-shadow:2px 2px 0 rgba(90,66,51,.12)}
+.pill.click{cursor:pointer;transition:all .15s}
+.pill.click:hover{border-color:#8b6e4c}
+.pill.click.on{background:#f6e7cf;border-color:#8b6e4c}
+.banner{display:none;background:#ffecec;border:2px solid #ef5350;color:#c62828;border-radius:8px;padding:10px 14px;font-size:.75rem;font-family:monospace;margin-bottom:12px}
+.banner.show{display:block}
+.cases{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;margin-bottom:20px}
+.case{background:#fff;border:3px solid #b98f5a;border-radius:4px;padding:12px 10px 14px;cursor:pointer;position:relative;box-shadow:0 6px 0 rgba(90,66,51,.18);transition:transform .15s;text-align:center;font-family:inherit}
+.case:hover{transform:translateY(-4px) rotate(-1deg)}
+.case:active{transform:translateY(2px)}
+.case .em{font-size:2.4rem;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+.case .nm{font-weight:700;font-size:.8rem;color:#4a3423;margin-top:6px}
+.case .df{font-size:.62rem;color:#8a744a;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.case .st{font-size:.8rem;color:#d99a1f;letter-spacing:2px;margin-top:2px}
+.case.done::after{content:'✓';position:absolute;top:4px;right:6px;background:#2e7d32;color:#fff;font-weight:700;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem}
+.panel{background:#fffdf5;border:2px solid #d9b98c;border-radius:6px;padding:18px;margin-bottom:14px;box-shadow:3px 3px 0 rgba(90,66,51,.12)}
+.ptitle{font-family:'Special Elite',monospace;font-weight:700;margin-bottom:6px;color:#4a3423}
+.psub{font-size:.78rem;color:#8a744a;margin-bottom:12px}
+.story{font-family:'Special Elite',monospace;font-size:.9rem;line-height:1.7;background:#fdf6e0;border:2px dashed #d9b98c;border-radius:8px;padding:13px 15px;color:#5a4a2a}
+.dossier{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}
+.doss{flex:1;min-width:220px}
+.doss h4{font-family:'Special Elite',monospace;font-size:.75rem;letter-spacing:1px;color:#a34a2e;margin-bottom:8px;text-transform:uppercase}
+.room-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
+.room-cell{border:3px solid rgba(0,0,0,.18);border-radius:4px;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:.66rem;font-weight:700;color:#3a2f25;text-align:center;padding:4px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.4)}
+.room-cell .re{font-size:1.3rem}
+.frames{display:flex;gap:10px;flex-wrap:wrap}
+.pframe{width:78px;background:#fff;border:3px solid #b98f5a;border-radius:3px;padding:6px 4px 8px;text-align:center;box-shadow:0 4px 0 rgba(90,66,51,.2)}
+.pframe .pe{width:52px;height:52px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.7rem;margin:0 auto 4px;border:2px solid rgba(0,0,0,.1)}
+.pframe .pn{font-size:.7rem;font-weight:700;color:#4a3423}
+.qbox{background:#fff8e1;border:2px solid #e8cd8d;border-radius:8px;padding:14px 16px;margin-bottom:12px;position:relative;box-shadow:3px 3px 0 rgba(90,66,51,.12)}
+.qbox::after{content:'📌';position:absolute;top:-10px;right:12px;font-size:1.1rem}
+.qtop{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.qlabel{font-family:'Special Elite',monospace;font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:#a34a2e}
+.saybtn{background:#fff;border:2px solid #e8cd8d;color:#8a6a1e;font-family:inherit;font-size:.72rem;font-weight:700;padding:5px 12px;border-radius:16px;cursor:pointer}
+.saybtn:hover{border-color:#a34a2e}
+.saybtn:disabled{opacity:.4}
+.qtext{font-size:1rem;line-height:1.8;margin-bottom:12px}
+.gap{display:inline-block;min-width:90px;border-bottom:3px dashed #a34a2e;color:#a34a2e;font-weight:700;text-align:center}
+.ogrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.opt{background:#fff;border:2px solid #d9b98c;color:#5a4233;font-family:inherit;font-size:.92rem;font-weight:700;padding:12px 8px;border-radius:6px;cursor:pointer;text-align:center;box-shadow:0 3px 0 #d9b98c;transition:all .15s}
+.opt:hover:not(:disabled){border-color:#a34a2e;transform:translateY(-2px)}
+.opt.good{border-color:#2e7d32;background:#e6f7e8;color:#2e7d32;animation:pop .45s}
+.opt.bad{border-color:#c62828;background:#ffecec;color:#c62828;animation:shake .4s}
+.opt:disabled{opacity:.55;cursor:not-allowed}
+@keyframes pop{50%{transform:scale(1.08)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.fb{margin-top:12px;padding:11px 15px;border-radius:8px;font-size:.85rem;display:none;font-weight:500;animation:sd .3s}
+@keyframes sd{from{opacity:0;transform:translateY(-8px)}to{opacity:1}}
+.fb.show{display:block}
+.fb.ok{background:#e6f7e8;border:2px solid #a5d6a7;color:#2e7d32}
+.fb.no{background:#ffecec;border:2px solid #ef9a9a;color:#c62828}
+.clue{font-family:'Special Elite',monospace;font-size:.85rem;line-height:1.6;background:#fffdf5;border:2px solid #e8cd8d;border-left:5px solid #a34a2e;border-radius:0 8px 8px 0;padding:9px 13px;margin-bottom:7px;color:#5a4a2a;box-shadow:2px 2px 0 rgba(90,66,51,.1)}
+.clue .imp{display:block;font-family:'Fredoka',sans-serif;font-size:.74rem;color:#2e7d32;font-weight:600;margin-top:3px}
+.clue .row{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.say{cursor:pointer;font-size:.95rem;flex-shrink:0;padding:0 4px}
+.nbwrap{overflow-x:auto}
+.nb{border-collapse:separate;border-spacing:4px;margin:0 auto}
+.nb th{font-family:'Special Elite',monospace;font-size:.66rem;letter-spacing:1px;color:#5a4233;padding:4px 6px;background:#fdf1cf;border:1px solid #d9b98c;border-radius:4px}
+.nb td{width:50px;height:38px;border:1px solid #d9b98c}
+.cell{width:100%;height:100%;border:none;border-radius:4px;background:#fff;cursor:pointer;font-size:1.1rem;font-weight:700;color:#c62828;box-shadow:0 2px 0 #ecdbb0}
+.cell.no{background:#ffecec}
+.cell.yes{background:#e6f7e8;color:#2e7d32}
+.susn{font-family:'Special Elite',monospace;font-size:.8rem;font-weight:700;color:#4a3423;padding-right:6px;white-space:nowrap;border:none!important}
+.acc{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.acccol{flex:1;min-width:180px}
+.acccol h4{font-family:'Special Elite',monospace;font-size:.72rem;letter-spacing:1px;color:#a34a2e;margin-bottom:6px;text-transform:uppercase}
+.pick{display:inline-block;background:#fff;border:2px solid #d9b98c;border-radius:14px;padding:7px 14px;margin:3px;font-size:.8rem;font-weight:600;color:#5a4233;cursor:pointer;box-shadow:0 3px 0 #ecdbb0}
+.pick:hover{border-color:#a34a2e}
+.pick.on{border-color:#a34a2e;background:#f6e7cf;box-shadow:0 3px 0 #d9b98c}
+.btnp{background:#4a3423;border:none;color:#fff;font-family:inherit;padding:12px 24px;cursor:pointer;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;border-radius:6px;box-shadow:0 5px 0 #2c1e12}
+.btnp:active{transform:translateY(3px);box-shadow:0 2px 0 #2c1e12}
+.btnp:disabled{opacity:.45;cursor:not-allowed}
+.btns{background:#fff;border:2px solid #d9b98c;color:#8a6a1e;font-family:inherit;padding:11px 22px;cursor:pointer;font-size:.85rem;font-weight:600;text-transform:uppercase;border-radius:6px;box-shadow:0 4px 0 #ecdbb0}
+.btns:hover{border-color:#a34a2e;color:#a34a2e}
+.mascot{position:fixed;right:14px;bottom:70px;z-index:50;display:flex;flex-direction:column;align-items:flex-end;gap:6px;pointer-events:none}
+.bubble{background:#fff;border:2px solid #d9b98c;border-radius:14px;padding:7px 12px;font-size:.76rem;font-weight:600;color:#5a4233;box-shadow:0 4px 0 #ecdbb0;opacity:0;transform:translateY(6px);transition:all .25s;max-width:180px;text-align:center}
+.bubble.show{opacity:1;transform:translateY(0)}
+.mface{width:92px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.25));animation:mfloat 3s ease-in-out infinite}
+.mface.excited{animation:mexcite .5s ease}
+@keyframes mfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes mexcite{0%{transform:scale(1)}40%{transform:scale(1.15) rotate(-6deg)}100%{transform:scale(1)}}
+.result{text-align:center;padding:30px 20px;background:linear-gradient(160deg,#fffdf5,#fdf1cf);border:4px solid #b98f5a;border-radius:8px;display:none}
+.result.show{display:block;animation:rf .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes rf{from{opacity:0;transform:scale(.85)}to{opacity:1}}
+.result .rem{font-size:4.4rem;margin-bottom:10px;animation:rb .7s cubic-bezier(.34,1.56,.64,1)}
+@keyframes rb{0%{transform:scale(.2);opacity:0}55%{transform:scale(1.2)}100%{transform:scale(1)}}
+.result .rt{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:1.7rem;color:#a34a2e;margin-bottom:8px}
+.result .rx{font-size:.92rem;color:#7a643c;margin-bottom:16px;font-family:'Special Elite',monospace}
+.result .rs{font-size:2.4rem;letter-spacing:7px;color:#e8a41f;margin-bottom:16px}
+.result .rs .em0{color:#e8d9ae}
+.rstats{display:flex;justify-content:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.stat{background:#fff;padding:11px 20px;border-radius:6px;border:2px solid #d9b98c;box-shadow:0 4px 0 #ecdbb0;min-width:100px}
+.stat .sv{font-size:1.5rem;color:#a34a2e;font-weight:800}
+.stat .sl{font-size:.6rem;color:#8a744a;text-transform:uppercase;font-weight:600;margin-top:3px}
+.rbuts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.hint{font-size:.72rem;color:#8a744a;margin-top:13px;font-style:italic;text-align:center}
+.conf{position:fixed;inset:0;pointer-events:none;z-index:100;display:none}
+.conf.show{display:block}
+.cp{position:absolute;width:10px;height:10px;animation:cf 3s linear forwards}
+@keyframes cf{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+@media(max-width:600px){.poster h1{font-size:2rem}.mface{width:70px}}
+</style>
+</head>
+<body>
+<div class="conf" id="conf"></div>
+<div class="mascot" id="mascot">
+  <div class="bubble" id="bubble"></div>
+  <div class="mface" id="mface"></div>
+</div>
+<div class="wrap">
+<div class="poster">
+<h1>MURDOKU JR.</h1>
+<div class="sub">Интерактивная детективная игра</div>
+<div class="meta"><span>PAST SIMPLE</span><span>5 ДЕЛ · 40 УЛИК</span><span>A1–B1</span></div>
+</div>
+<div class="banner" id="banner"></div>
+<div class="hud">
+<div class="pill">📁 Cases: <span id="hudDone">0</span>/5</div>
+<div class="pill">⭐ Stars: <span id="hudStars">0</span></div>
+<div class="pill click" id="shufPill">🔀 Shuffle clues: OFF</div>
+</div>
+
+<div class="cases" id="cases"></div>
+
+<div id="game" class="hidden">
+<div class="panel">
+<div id="chead"></div>
+<div class="story" id="story"></div>
+<div class="dossier">
+<div class="doss"><h4>👥 Suspects</h4><div class="frames" id="frames"></div></div>
+<div class="doss"><h4>📍 The map</h4>
+<div class="room-grid" id="rooms"></div>
+</div>
+</div>
+</div>
+
+<div class="panel">
+<div class="ptitle">🔍 Clue <span id="clueNum">1</span> of <span id="clueAll">8</span> — open the grammar lock</div>
+<div class="qbox">
+<div class="qtop">
+<div class="qlabel">Grammar lock · Past Simple</div>
+<button class="saybtn" id="sayBtn">🔊 Listen</button>
+</div>
+<div class="qtext" id="qtext"></div>
+<div class="ogrid" id="opts"></div>
+</div>
+<div class="fb" id="qfb"></div>
+<div id="cluelist"></div>
+</div>
+
+<div class="panel">
+<div class="ptitle">📓 Detective notebook</div>
+<div class="psub">You mark everything yourself! Click a cell: empty → ✗ (was NOT there) → ✓ (was there). Each suspect was in one place only.</div>
+<div class="nbwrap"><table class="nb" id="nb"></table></div>
+</div>
+
+<div class="panel hidden" id="accPanel">
+<div class="ptitle">⚖️ Make your accusation!</div>
+<div class="psub">Who did it — and where were they?</div>
+<div class="acc">
+<div class="acccol"><h4>👤 The culprit is…</h4><div id="accSus"></div></div>
+<div class="acccol"><h4>📍 …and was in the</h4><div id="accPlc"></div></div>
+</div>
+<button class="btnp" id="accBtn" disabled>🔎 Accuse!</button>
+<div class="fb" id="accfb"></div>
+</div>
+</div>
+
+<div class="result" id="result">
+<div class="rem" id="rEm">🎉</div>
+<div class="rt" id="rT"></div>
+<div class="rx" id="rX"></div>
+<div class="rs" id="rS"></div>
+<div class="rstats" id="rSt"></div>
+<div class="rbuts" id="rB"></div>
+</div>
+
+<div class="hint">💡 Read each clue carefully — every suspect really was somewhere. Mark the notebook yourself and accuse only when your grid is complete!</div>
+</div>
+
+<script>
+'use strict';
+window.onerror=function(m){var b=document.getElementById('banner');if(b){b.textContent='⚠️ '+m;b.className='banner show';}return false;};
+var $=function(id){return document.getElementById(id);};
+
+/* ================= DETECTIVE CAT ================= */
+var FACES={
+idle:'<circle cx="60" cy="68" r="30" fill="#c8b89a"/><path d="M36 48 l6 -16 12 10 z" fill="#c8b89a"/><path d="M84 48 l-6 -16 -12 10 z" fill="#c8b89a"/><circle cx="50" cy="63" r="3.5" fill="#3a2a10"/><circle cx="70" cy="63" r="3.5" fill="#3a2a10"/><path d="M54 75 q6 5 12 0" stroke="#3a2a10" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M40 70 l-8 -2 M40 74 l-8 2 M80 70 l8 -2 M80 74 l8 2" stroke="#8a745a" stroke-width="2.5" stroke-linecap="round"/>',
+happy:'<circle cx="60" cy="68" r="30" fill="#c8b89a"/><path d="M36 48 l6 -16 12 10 z" fill="#c8b89a"/><path d="M84 48 l-6 -16 -12 10 z" fill="#c8b89a"/><path d="M45 62 q5 -6 10 0" stroke="#3a2a10" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M65 62 q5 -6 10 0" stroke="#3a2a10" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M50 72 q10 10 20 0" stroke="#3a2a10" stroke-width="3" fill="none" stroke-linecap="round"/>',
+oops:'<circle cx="60" cy="68" r="30" fill="#c8b89a"/><path d="M36 48 l6 -16 12 10 z" fill="#c8b89a"/><path d="M84 48 l-6 -16 -12 10 z" fill="#c8b89a"/><path d="M45 58 l10 4 M55 58 l-10 4" stroke="#3a2a10" stroke-width="3" stroke-linecap="round"/><path d="M65 62 l10 -4 M75 58 l-10 4" stroke="#3a2a10" stroke-width="3" stroke-linecap="round"/><path d="M52 78 q4 -4 8 0 q4 4 8 0" stroke="#3a2a10" stroke-width="3" fill="none" stroke-linecap="round"/>',
+win:'<circle cx="60" cy="68" r="30" fill="#c8b89a"/><path d="M36 48 l6 -16 12 10 z" fill="#c8b89a"/><path d="M84 48 l-6 -16 -12 10 z" fill="#c8b89a"/><path d="M43 54 l3 5 5 1 -4 4 1 5 -5 -2 -5 2 1 -5 -4 -4 5 -1 z" fill="#e8a41f"/><path d="M69 54 l3 5 5 1 -4 4 1 5 -5 -2 -5 2 1 -5 -4 -4 5 -1 z" fill="#e8a41f"/><ellipse cx="60" cy="77" rx="8" ry="6" fill="#3a2a10"/><ellipse cx="60" cy="74" rx="5" ry="3.5" fill="#e57373"/>'};
+function mascot(state,text){
+    var hat='<path d="M40 42 q3 -24 20 -24 q17 0 20 24 q-20 -8 -40 0 z" fill="#8a6a1e" stroke="#6a4e10" stroke-width="2"/><path d="M42 34 q18 -8 36 0 l2 8 q-20 -8 -40 0 z" fill="#a8862e"/><ellipse cx="60" cy="43" rx="24" ry="6" fill="#8a6a1e"/><circle cx="88" cy="50" r="9" fill="#8a6a1e"/><line x1="86" y1="58" x2="82" y2="66" stroke="#c88a1f" stroke-width="2"/><circle cx="81" cy="68" r="4" fill="none" stroke="#c88a1f" stroke-width="2"/>';
+    $('mface').innerHTML='<svg viewBox="0 0 120 110">'+hat+(FACES[state]||FACES.idle)+'</svg>';
+    if(state!=='idle'){$('mface').classList.add('excited');setTimeout(function(){$('mface').classList.remove('excited');},550);}
+    var bub=$('bubble');
+    if(text){bub.textContent=text;bub.classList.add('show');
+        clearTimeout(mascot._t);mascot._t=setTimeout(function(){bub.classList.remove('show');},2400);}
+    else bub.classList.remove('show');
+}
+
+/* ================= SPEECH ================= */
+function speak(t){
+    try{
+        if(!window.speechSynthesis)return;
+        speechSynthesis.cancel();
+        var u=new SpeechSynthesisUtterance(t);
+        u.lang='en-US';u.rate=.85;u.pitch=1.05;
+        var vs=speechSynthesis.getVoices();
+        for(var i=0;i<vs.length;i++){if(/en(-|_)/i.test(vs[i].lang)){u.voice=vs[i];break;}}
+        speechSynthesis.speak(u);
+    }catch(e){}
+}
+function qSpeak(q){return q.replace(/___\s*$(.+?)$/,'what').replace(/___/,'what');}
+
+/* ================= CASES: 5 × 8 clues ================= */
+var CASES=[
+{id:'cake',emoji:'🎂',name:'The Missing Cake',diff:'Easy',stars:1,
+ story:'This morning the chocolate cake disappeared from the school kitchen! Detective Whiskers found four children nearby. Everyone was in one place during the break.',
+ suspects:['Max','Luna','Oliver','Sofia'],avatars:['👦','👧','🧒','👩'],
+ places:['Kitchen','Library','Garden','Art room'],roomE:['🍳','📚','🌳','🎨'],
+ culprit:'Oliver',cplace:'Kitchen',
+ solution:'Oliver took the cake from the Kitchen! Max read in the Library, Luna drew in the Art room, Sofia played football in the Garden. The chocolate crumbs on his jacket told the whole story!',
+ clues:[
+  {q:'Oliver ___ (love) chocolate cake very much.',opts:['loved','loveed','loving'],correct:0,
+   fact:'"Oliver loved chocolate cake very much," everyone knew it.',imp:'⚠ Motive — remember this suspect!',
+   note:'love — loved: regular verb, just add -ed.'},
+  {q:'The kitchen door ___ (be) open during the whole break.',opts:['was','were','is'],correct:0,
+   fact:'"The kitchen door was open during the whole break," the janitor said.',imp:'🗺️ Crime scene: anyone could enter the Kitchen.',
+   note:'be — was/were: I, he, she, it → was.'},
+  {q:'Luna ___ (not / play) in the garden during the break.',opts:['didn\'t play','don\'t played','not played'],correct:0,
+   fact:'"Luna didn\'t play in the garden during the break," her friends confirmed.',imp:'→ Mark ✗: Luna was NOT in the Garden.',
+   note:'Negative Past Simple: didn\'t + verb (didn\'t play).'},
+  {q:'Max ___ (not / go) to the art room.',opts:['didn\'t go','don\'t went','not went'],correct:0,
+   fact:'"Max didn\'t go to the art room," his classmates remembered.',imp:'→ Mark ✗: Max was NOT in the Art room.',
+   note:'Negative Past Simple: didn\'t + verb (didn\'t go).'},
+  {q:'Sofia ___ (play) football in the garden.',opts:['plaied','played','playd'],correct:1,
+   fact:'"Sofia played football in the garden," the PE teacher saw her.',imp:'→ Mark ✓: Sofia was IN the Garden.',
+   note:'play — played: vowel + y → just add -ed.'},
+  {q:'Luna ___ (draw) pictures in the art room all break.',opts:['drawed','drew','drawn'],correct:1,
+   fact:'"Luna drew pictures in the art room all break," said her classmate.',imp:'→ Mark ✓: Luna was IN the Art room.',
+   note:'draw — drew — drawn: irregular verb.'},
+  {q:'Max ___ (read) a funny book in the library.',opts:['readed','read','reads'],correct:1,
+   fact:'"Max read a funny book in the library," the librarian saw him all break.',imp:'→ Mark ✓: Max was IN the Library.',
+   note:'read — read — read: same spelling, different sound! [riːd] → [red].'},
+  {q:'The cook ___ (see) chocolate crumbs on Oliver\'s jacket near the kitchen.',opts:['seed','saw','seen'],correct:1,
+   fact:'"The cook saw chocolate crumbs on Oliver\'s jacket near the kitchen!"',imp:'→ Mark ✓: Oliver was IN the Kitchen — case closed!',
+   note:'see — saw — seen: irregular verb.'}
+ ]},
+{id:'vase',emoji:'🏺',name:'The Broken Vase',diff:'Medium',stars:2,
+ story:'Crash! The beautiful vase in the school hall broke during the break. Four students were nearby. Detective Whiskers is on the case — and so are you!',
+ suspects:['Emma','Tom','Mia','Jack'],avatars:['👧','👦','👧','🧑'],
+ places:['Hall','Kitchen','Staff room','Balcony'],roomE:['🛋️','🍳','📁','🌷'],
+ culprit:'Tom',cplace:'Hall',
+ solution:'Tom ran in the Hall and broke the vase. Emma watered flowers on the Balcony, Mia read in the Staff room, and Jack helped the cook in the Kitchen — he is innocent!',
+ clues:[
+  {q:'Tom ___ (wear) his new sneakers that morning.',opts:['wear','wore','worn'],correct:1,
+   fact:'"Tom wore his new sneakers that morning," his friend remembered. They made very loud steps!',imp:'⚠ Evidence — loud steps! Remember this suspect.',
+   note:'wear — wore — worn: irregular verb.'},
+  {q:'Mia\'s sister ___ (hear) a loud crash in the hall.',opts:['hared','heard','heared'],correct:1,
+   fact:'"Mia\'s sister heard a loud crash in the hall."',imp:'🗺️ Crime scene: the vase broke in the Hall.',
+   note:'hear — heard: irregular verb.'},
+  {q:'Mia ___ (not / go) to the kitchen during the break.',opts:['didn\'t go','don\'t went','not went'],correct:0,
+   fact:'"Mia didn\'t go to the kitchen during the break," her sister said.',imp:'→ Mark ✗: Mia was NOT in the Kitchen.',
+   note:'Negative Past Simple: didn\'t + verb (didn\'t go).'},
+  {q:'Jack ___ (not / water) the flowers on the balcony.',opts:['didn\'t water','don\'t watered','not watered'],correct:0,
+   fact:'"Jack didn\'t water the flowers on the balcony," Emma said.',imp:'→ Mark ✗: Jack was NOT on the Balcony.',
+   note:'didn\'t water — after didn\'t we use the plain verb.'},
+  {q:'Emma ___ (water) the flowers on the balcony.',opts:['watered','wattered','waterd'],correct:0,
+   fact:'"Emma watered the flowers on the balcony," her friend saw her.',imp:'→ Mark ✓: Emma was ON the Balcony.',
+   note:'water — watered: regular verb, just add -ed.'},
+  {q:'Mia ___ (read) a book in the staff room all break.',opts:['readed','read','reads'],correct:1,
+   fact:'"Mia read a book in the staff room all break," said her sister. She sneaked in when nobody was there!',imp:'→ Mark ✓: Mia was IN the Staff room.',
+   note:'read — read — read: same spelling, different sound! [riːd] → [red].'},
+  {q:'The janitor ___ (see) Tom running in the hall — right before the crash.',opts:['seed','saw','seen'],correct:1,
+   fact:'"The janitor saw Tom running in the hall — right before the crash!"',imp:'→ Mark ✓: Tom was IN the Hall.',
+   note:'see — saw — seen: irregular verb.'},
+  {q:'Jack ___ (help) the cook in the kitchen.',opts:['helped','helt','helpd'],correct:0,
+   fact:'"Jack helped the cook in the kitchen — he heard the crash from there," the cook said.',imp:'→ Mark ✓: Jack was IN the Kitchen.',
+   note:'help — helped: regular verb, just add -ed.'}
+ ]},
+{id:'homework',emoji:'📝',name:'The Lost Homework',diff:'Hard',stars:3,
+ story:'Peter\'s homework vanished from the classroom desk! Four classmates were around during the break. Detective Whiskers sharpened his pencil — solve it!',
+ suspects:['Nina','Peter','Zoe','Sam'],avatars:['👧','👦','👧','👦'],
+ places:['Classroom','Gym','Canteen','Playground'],roomE:['🏫','🏀','🍽️','🛝'],
+ culprit:'Peter',cplace:'Classroom',
+ solution:'Peter forgot his homework at home and hid it in the Classroom! Zoe ate lunch in the Canteen, Nina jumped in the Gym, and Sam waited in the Playground. The teacher found it under the desk!',
+ clues:[
+  {q:'Peter ___ (forget) his homework at home.',opts:['forgetted','forgot','forgotten'],correct:1,
+   fact:'"Peter forgot his homework at home this morning," his mum said.',imp:'⚠ Motive — remember this suspect!',
+   note:'forget — forgot: irregular verb.'},
+  {q:'The classroom window ___ (be) open during the break.',opts:['was','were','is'],correct:0,
+   fact:'"The classroom window was open during the break," the teacher said.',imp:'🗺️ Crime scene: but did the homework fly out?',
+   note:'be — was/were: I, he, she, it → was.'},
+  {q:'Zoe ___ (not / jump) in the gym during the break.',opts:['didn\'t jump','don\'t jumped','not jumped'],correct:0,
+   fact:'"Zoe didn\'t jump in the gym during the break," the coach said.',imp:'→ Mark ✗: Zoe was NOT in the Gym.',
+   note:'Negative Past Simple: didn\'t + verb (didn\'t jump).'},
+  {q:'Sam ___ (not / eat) lunch in the canteen.',opts:['didn\'t eat','don\'t ate','not ate'],correct:0,
+   fact:'"Sam didn\'t eat lunch in the canteen," the cook said.',imp:'→ Mark ✗: Sam was NOT in the Canteen.',
+   note:'didn\'t eat — after didn\'t we use the plain verb (not "didn\'t ate").'},
+  {q:'Nina ___ (jump) in the gym after lunch.',opts:['jumped','jumpt','jumpd'],correct:0,
+   fact:'"Nina jumped in the gym after lunch," the coach counted 50 jumps!',imp:'→ Mark ✓: Nina was IN the Gym.',
+   note:'jump — jumped: regular verb, just add -ed.'},
+  {q:'Zoe ___ (eat) lunch in the canteen.',opts:['eated','ate','eaten'],correct:1,
+   fact:'"Zoe ate lunch in the canteen," the cook saw her.',imp:'→ Mark ✓: Zoe was IN the Canteen.',
+   note:'eat — ate — eaten: irregular verb.'},
+  {q:'Sam ___ (wait) for his brother at the playground.',opts:['waited','wait','waitted'],correct:0,
+   fact:'"Sam waited for his brother at the playground," the janitor saw him.',imp:'→ Mark ✓: Sam was IN the Playground.',
+   note:'wait — waited: regular verb, just add -ed.'},
+  {q:'A classmate ___ (see) Peter hiding a paper under the classroom desk.',opts:['seed','saw','seen'],correct:1,
+   fact:'"A classmate saw Peter hiding a paper under the classroom desk!"',imp:'→ Mark ✓: Peter was IN the Classroom — case closed!',
+   note:'see — saw — seen: irregular verb.'}
+ ]},
+{id:'sandwich',emoji:'🥪',name:'The Vanishing Sandwich',diff:'Medium',stars:2,
+ story:'Anna made a huge sandwich for lunch — and at the break it disappeared from the canteen table! Four students were around. Someone was very hungry…',
+ suspects:['Anna','Leo','Kate','Dan'],avatars:['👧','👦','👧','👦'],
+ places:['Canteen','Music room','Playground','Bus stop'],roomE:['🍽️','🎵','🛝','🚌'],
+ culprit:'Leo',cplace:'Canteen',
+ solution:'Leo was in the Canteen and ate the sandwich! Kate sang in the Music room, Anna rode her bike in the Playground, and Dan waited at the Bus stop. Anna forgave Leo and made him a new sandwich!',
+ clues:[
+  {q:'Yesterday Leo ___ (be) very hungry.',opts:['was','were','is'],correct:0,
+   fact:'"Leo was very hungry yesterday," said his brother.',imp:'⚠ Motive — remember this suspect!',
+   note:'be — was/were: I, he, she, it → was; you, we, they → were.'},
+  {q:'The canteen clock ___ (show) 12:15 when the sandwich disappeared.',opts:['shew','showed','shown'],correct:1,
+   fact:'"The canteen clock showed 12:15 when the sandwich disappeared," the cook said.',imp:'🗺️ Crime scene: the crime happened at 12:15.',
+   note:'show — showed: regular verb, just add -ed.'},
+  {q:'Kate ___ (not / ride) her bike at the playground.',opts:['didn\'t ride','don\'t rode','not rode'],correct:0,
+   fact:'"Kate didn\'t ride her bike at the playground," her friends said.',imp:'→ Mark ✗: Kate was NOT on the Playground.',
+   note:'didn\'t ride — after didn\'t we use the plain verb.'},
+  {q:'Dan ___ (not / sing) in the music room.',opts:['didn\'t sing','don\'t sang','not sang'],correct:0,
+   fact:'"Dan didn\'t sing in the music room," the music teacher said.',imp:'→ Mark ✗: Dan was NOT in the Music room.',
+   note:'didn\'t sing — after didn\'t we use the plain verb.'},
+  {q:'Anna ___ (ride) her bike at the playground.',opts:['rided','rode','ridden'],correct:1,
+   fact:'"Anna rode her bike at the playground all break," her friends saw.',imp:'→ Mark ✓: Anna was ON the Playground.',
+   note:'ride — rode — ridden: irregular verb.'},
+  {q:'Kate ___ (sing) in the music room at lunch time.',opts:['singed','sang','singd'],correct:1,
+   fact:'"Kate sang in the music room at lunch time," the music teacher heard her.',imp:'→ Mark ✓: Kate was IN the Music room.',
+   note:'sing — sang — sung: irregular verb.'},
+  {q:'Dan ___ (wait) for his bus at the bus stop.',opts:['waited','wait','waitted'],correct:0,
+   fact:'"Dan waited for his bus at the bus stop," the driver saw him.',imp:'→ Mark ✓: Dan was AT the Bus stop.',
+   note:'wait — waited: regular verb, just add -ed.'},
+  {q:'The cook ___ (see) Leo near the table with the sandwich.',opts:['seed','saw','seen'],correct:1,
+   fact:'"The cook saw Leo near the table with the sandwich!"',imp:'→ Mark ✓: Leo was IN the Canteen — case closed!',
+   note:'see — saw — seen: irregular verb.'}
+ ]},
+{id:'trophy',emoji:'🏆',name:'The Missing Trophy',diff:'Hard',stars:3,
+ story:'The golden sports trophy disappeared from the school yard before the assembly! Four students were nearby. Detective Whiskers put on his best detective coat…',
+ suspects:['Ben','Rita','Igor','Nina'],avatars:['👦','👧','👦','👧'],
+ places:['Yard','Library','Gym','Office'],roomE:['🌳','📚','🏀','🗄️'],
+ culprit:'Ben',cplace:'Yard',
+ solution:'Ben took the trophy to the Yard to clean it for the team — a surprise for everyone! But he should have asked first… Now he knows: even good surprises need permission!',
+ clues:[
+  {q:'Ben ___ (win) the trophy last year.',opts:['winned','won','win'],correct:1,
+   fact:'"Ben won the trophy last year," said the coach.',imp:'⚠ Motive — remember this suspect!',
+   note:'win — won: irregular verb.'},
+  {q:'The yard gate ___ (be) open all morning.',opts:['was','were','is'],correct:0,
+   fact:'"The yard gate was open all morning," the janitor said.',imp:'🗺️ Crime scene: anyone could enter the Yard.',
+   note:'be — was/were: I, he, she, it → was.'},
+  {q:'Nina ___ (not / sweep) the floor in the gym.',opts:['didn\'t sweep','don\'t swept','not swept'],correct:0,
+   fact:'"Nina didn\'t sweep the floor in the gym," the PE teacher said.',imp:'→ Mark ✗: Nina was NOT in the Gym.',
+   note:'didn\'t sweep — after didn\'t we use the plain verb.'},
+  {q:'Igor ___ (not / read) a book in the library.',opts:['didn\'t read','don\'t readed','not read'],correct:0,
+   fact:'"Igor didn\'t read a book in the library," the librarian said.',imp:'→ Mark ✗: Igor was NOT in the Library.',
+   note:'didn\'t read — after didn\'t we use the plain verb.'},
+  {q:'Rita ___ (sweep) the floor in the gym.',opts:['sweeped','swept','sweped'],correct:1,
+   fact:'"Rita swept the floor in the gym," the PE teacher thanked her.',imp:'→ Mark ✓: Rita was IN the Gym.',
+   note:'sweep — swept: irregular verb.'},
+  {q:'Nina ___ (read) a book in the library all afternoon.',opts:['readed','read','reads'],correct:1,
+   fact:'"Nina read a book in the library all afternoon," the librarian saw her.',imp:'→ Mark ✓: Nina was IN the Library.',
+   note:'read — read — read: same spelling, different sound! [riːd] → [red].'},
+  {q:'Igor ___ (help) the secretary in the office.',opts:['helped','helt','helpd'],correct:0,
+   fact:'"Igor helped the secretary in the office," the head teacher said.',imp:'→ Mark ✓: Igor was IN the Office.',
+   note:'help — helped: regular verb, just add -ed.'},
+  {q:'A cleaner ___ (see) Ben with a polishing cloth in the yard.',opts:['seed','saw','seen'],correct:1,
+   fact:'"A cleaner saw Ben with a polishing cloth in the yard!"',imp:'→ Mark ✓: Ben was IN the Yard — case closed!',
+   note:'see — saw — seen: irregular verb.'}
+ ]}
+];
+
+/* ================= STATE ================= */
+var ci=-1,cur=null,caseClues=[],clueIdx=0,ok=0,no=0,stars=0,done={},terr=0;
+var accSus=null,accPlc=null,accTried=0,shuffleClues=false,inAccuse=false;
+var ROOMCOLS=['#c594c5','#a2c4e9','#a2d9c4','#fdcb6e','#ff9f9f','#b8d89a'];
+var PRAISE=['Elementary!','A clue!','Sharp mind!','The case is getting warmer!','Watson would be proud!'];
+var OOPS=['Hmm… think again!','The plot thickens…','Not this trail!','Check the verb form!'];
+function sh(a){var r=[].concat(a);for(var i=r.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=r[i];r[i]=r[j];r[j]=t;}return r;}
+
+/* ================= SOUND ================= */
+var AC=null;
+function tone(f,t,d){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.12,AC.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+t+d);o.connect(g);g.connect(AC.destination);o.start(AC.currentTime+t);o.stop(AC.currentTime+t+d);}catch(e){}}
+function sOK(){tone(660,0,.1);tone(880,.1,.1);tone(1320,.2,.15);}
+function sNo(){tone(200,0,.15);tone(150,.12,.2);}
+function sWin(){[523,659,784,1046].forEach(function(f,i){tone(f,i*.12,.18);});}
+
+/* ================= CASE LIST ================= */
+function renderCases(){
+$('cases').innerHTML='';
+CASES.forEach(function(c,i){
+var b=document.createElement('button');
+b.className='case'+(done[c.id]?' done':'');
+b.innerHTML='<div class="em">'+c.emoji+'</div><div class="nm">'+c.name+'</div><div class="df">'+c.diff+' · '+c.clues.length+' clues</div><div class="st">'+('★'.repeat(c.stars))+'☆'.repeat(3-c.stars)+'</div>';
+b.onclick=function(){startCase(i);};
+$('cases').appendChild(b);});
+$('hudDone').textContent=Object.keys(done).length;
+$('hudStars').textContent=stars;
+}
+
+function startCase(i){
+ci=i;cur=CASES[i];clueIdx=0;ok=0;no=0;terr=0;
+accSus=null;accPlc=null;accTried=0;inAccuse=false;
+caseClues=shuffleClues?sh(cur.clues):cur.clues.slice();
+$('game').classList.remove('hidden');
+$('result').className='result';
+$('accPanel').classList.add('hidden');
+$('accfb').className='fb';
+$('chead').innerHTML='<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><span style="font-size:2.6rem">'+cur.emoji+'</span><div><div style="font-family:\'Playfair Display\',Georgia,serif;font-weight:900;font-size:1.3rem;color:#4a3423">Case: '+cur.name+'</div><div style="font-size:.78rem;color:#8a744a">'+cur.diff+(shuffleClues?' · clues shuffled 🔀':' · clues in order')+'</div></div></div>';
+$('story').textContent=cur.story;
+$('frames').innerHTML=cur.suspects.map(function(s,k){
+return '<div class="pframe"><div class="pe" style="background:'+ROOMCOLS[k%ROOMCOLS.length]+'">'+cur.avatars[k]+'</div><div class="pn">'+s+'</div></div>';}).join('');
+$('rooms').innerHTML=cur.places.map(function(p,k){
+return '<div class="room-cell" style="background:'+ROOMCOLS[k%ROOMCOLS.length]+'"><span class="re">'+cur.roomE[k]+'</span>'+p+'</div>';}).join('');
+$('cluelist').innerHTML='';
+$('sayBtn').disabled=false;
+buildNotebook();
+renderClue();
+mascot('idle',shuffleClues?'Shuffled clues! Good luck…':'New case! Let\'s investigate…');
+window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ================= NOTEBOOK (manual only) ================= */
+function buildNotebook(){
+var t=$('nb');
+t.innerHTML='<tr><th class="susn">Suspect \\ Place</th>'+cur.places.map(function(p){return '<th>'+p+'</th>';}).join('')+'</tr>';
+cur.suspects.forEach(function(s){
+var tr=document.createElement('tr');
+tr.innerHTML='<td class="susn">'+s+'</td>';
+cur.places.forEach(function(){
+var td=document.createElement('td');
+var cell=document.createElement('button');
+cell.className='cell';
+cell.dataset.state='0';
+cell.onclick=function(){
+var st=+cell.dataset.state;st=(st+1)%3;
+cell.dataset.state=st;
+cell.className='cell'+(st===1?' no':'')+(st===2?' yes':'');
+cell.textContent=st===1?'✗':(st===2?'✓':'');
+tone(st===2?880:(st===1?330:520),0,.06);
+};
+td.appendChild(cell);tr.appendChild(td);
+});
+t.appendChild(tr);
+});
+}
+
+/* ================= CLUES ================= */
+function renderClue(){
+if(clueIdx>=caseClues.length){showAccuse();return;}
+var c=caseClues[clueIdx];
+$('clueNum').textContent=clueIdx+1;
+$('clueAll').textContent=caseClues.length;
+$('qtext').innerHTML=c.q.replace('___','<span class="gap">…</span>');
+$('sayBtn').onclick=function(){speak(qSpeak(c.q));};
+var box=$('opts');box.innerHTML='';
+sh(c.opts.map(function(o,i){return {o:o,i:i};})).forEach(function(it){
+var b=document.createElement('button');
+b.className='opt';b.textContent=it.o;
+b.onclick=function(){answerClue(it,b,c);};
+box.appendChild(b);
+});
+$('qfb').className='fb';
+}
+
+function answerClue(it,b,c){
+if(it.i===c.correct){
+ok++;sOK();mascot('happy',PRAISE[Math.floor(Math.random()*PRAISE.length)]);
+b.classList.add('good');
+[].forEach.call($('opts').children,function(x){x.disabled=true;});
+$('qfb').className='fb show ok';
+$('qfb').innerHTML='<b>✅</b> Correct grammar! Clue unlocked:<br><span style="font-family:\'Special Elite\',monospace">«'+c.fact+'»</span>';
+addClue(c);
+clueIdx++;
+setTimeout(renderClue,2500);
+}else{
+no++;sNo();terr++;mascot('oops',OOPS[Math.floor(Math.random()*OOPS.length)]);
+b.classList.add('bad');b.disabled=true;
+setTimeout(function(){b.classList.remove('bad');},450);
+$('qfb').className='fb show no';
+$('qfb').innerHTML='<b>❌</b> "<b>'+it.o+'</b>" is not correct Past Simple. Try another form!';
+if(terr>=2){
+$('qfb').innerHTML+='<br><span style="font-size:.8rem">💡 Hint: the right form starts with "<b>'+c.opts[c.correct].slice(0,3)+'</b>…"</span>';
+}
+}
+}
+function addClue(c){
+var d=document.createElement('div');
+d.className='clue';
+d.innerHTML='<div class="row"><span>🔎 '+c.fact+'</span><span class="say" title="Listen">🔊</span></div>'+
+'<span class="imp">'+c.imp+'</span><br><span style="font-family:\'Fredoka\',sans-serif;font-size:.72rem;color:#a08438">📚 '+c.note+'</span>';
+d.querySelector('.say').onclick=function(){speak(c.fact.replace(/[«»"]/g,''));};
+$('cluelist').appendChild(d);
+}
+
+/* ================= SHUFFLE ================= */
+$('shufPill').onclick=function(){
+shuffleClues=!shuffleClues;
+this.textContent='🔀 Shuffle clues: '+(shuffleClues?'ON':'OFF');
+this.classList.toggle('on',shuffleClues);
+mascot('happy',shuffleClues?'Shuffled mode! Harder now…':'Back in order!');
+if(!$('game').classList.contains('hidden')&&!inAccuse&&clueIdx<caseClues.length){
+caseClues=caseClues.slice(0,clueIdx).concat(sh(caseClues.slice(clueIdx)));
+renderClue();
+}
+};
+
+/* ================= ACCUSATION ================= */
+function showAccuse(){
+inAccuse=true;
+$('qtext').innerHTML='<span style="color:#8a6a1e">All clues unlocked! Time to accuse…</span>';
+$('opts').innerHTML='';
+$('sayBtn').disabled=true;
+$('accPanel').classList.remove('hidden');
+buildPicks();
+mascot('idle','Who was in the right place…?');
+}
+function buildPicks(){
+$('accSus').innerHTML='';
+cur.suspects.forEach(function(s){
+var p=document.createElement('button');p.className='pick';p.textContent=s;
+p.onclick=function(){accSus=s;refreshPicks();};
+$('accSus').appendChild(p);});
+$('accPlc').innerHTML='';
+cur.places.forEach(function(s){
+var p=document.createElement('button');p.className='pick';p.textContent=s;
+p.onclick=function(){accPlc=s;refreshPicks();};
+$('accPlc').appendChild(p);});
+$('accBtn').disabled=true;
+}
+function refreshPicks(){
+[].forEach.call($('accSus').children,function(x){x.classList.toggle('on',x.textContent===accSus);});
+[].forEach.call($('accPlc').children,function(x){x.classList.toggle('on',x.textContent===accPlc);});
+$('accBtn').disabled=!(accSus&&accPlc);
+}
+$('accBtn').onclick=function(){
+accTried++;
+if(accSus===cur.culprit&&accPlc===cur.cplace){
+sWin();showResult(true);
+}else{
+no++;sNo();mascot('oops','The evidence says no…');
+$('accfb').className='fb show no';
+$('accfb').innerHTML='<b>❌</b> The detective notebook disagrees. Check your grid and try again! (Attempt '+accTried+')';
+}
+};
+
+/* ================= RESULT ================= */
+function showResult(solved){
+$('game').classList.add('hidden');
+$('result').className='result show';
+var att=ok+no,acc=att?Math.round(ok/att*100):100;
+var st=solved?(accTried===1?cur.stars:Math.max(1,cur.stars-accTried+1)):1;
+if(solved){stars+=st;done[cur.id]=true;sWin();confetti();mascot('win','Case closed! 🕵️');}
+else mascot('oops','The case continues…');
+renderCases();
+$('rEm').textContent=solved?cur.emoji:'🤔';
+$('rT').textContent=solved?'🌟 Case Closed! 🌟':'Keep Investigating!';
+$('rX').textContent=solved?cur.solution:'Some clues don\'t add up yet. Check the notebook and accuse again!';
+$('rS').innerHTML=solved?('★'.repeat(st)+'<span class="em0">'+'☆'.repeat(3-st)+'</span>'):'<span class="em0">☆☆☆</span>';
+$('rSt').innerHTML=
+'<div class="stat"><div class="sv">'+ok+'/'+cur.clues.length+'</div><div class="sl">Clues First Try</div></div>'+
+'<div class="stat"><div class="sv">'+acc+'%</div><div class="sl">Grammar Accuracy</div></div>'+
+'<div class="stat"><div class="sv">'+accTried+'</div><div class="sl">Accusations</div></div>';
+$('rB').innerHTML='';
+if(!solved){
+var back=document.createElement('button');
+back.className='btnp';back.textContent='← Back to the Case';
+back.onclick=function(){$('result').className='result';$('game').classList.remove('hidden');inAccuse=false;};
+$('rB').appendChild(back);
+}
+var nx=-1;
+for(var i=0;i<CASES.length;i++){if(i!==ci&&!done[CASES[i].id]){nx=i;break;}}
+if(nx>=0){
+var b1=document.createElement('button');
+b1.className='btnp';b1.textContent='→ Next Case';
+b1.onclick=function(){startCase(nx);};
+$('rB').appendChild(b1);
+}else if(Object.keys(done).length===CASES.length){
+var b2=document.createElement('button');
+b2.className='btnp';b2.textContent='🏆 All 5 Cases Solved!';
+b2.disabled=true;$('rB').appendChild(b2);
+}
+var b3=document.createElement('button');
+b3.className='btns';b3.textContent='↻ Investigate Again';
+b3.onclick=function(){startCase(ci);};
+$('rB').appendChild(b3);
+}
+
+function confetti(){
+$('conf').innerHTML='';$('conf').className='conf show';
+var cols=['#c594c5','#a2c4e9','#a2d9c4','#fdcb6e','#ff9f9f','#e8a41f'];
+for(var i=0;i<70;i++){
+var p=document.createElement('div');p.className='cp';
+p.style.left=Math.random()*100+'%';
+p.style.background=cols[Math.floor(Math.random()*cols.length)];
+p.style.animationDelay=Math.random()*.5+'s';
+p.style.animationDuration=(Math.random()*1.5+2)+'s';
+p.style.width=(Math.random()*8+6)+'px';
+p.style.height=(Math.random()*8+6)+'px';
+p.style.borderRadius=Math.random()>.5?'50%':'2px';
+$('conf').appendChild(p);}
+setTimeout(function(){$('conf').className='conf';},4000);
+}
+
+/* ================= INIT ================= */
+renderCases();
+mascot('idle','Detective Whiskers at your service! 🕵️');
+</script>
+</body>
+</html>
